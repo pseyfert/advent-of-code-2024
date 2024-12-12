@@ -20,12 +20,11 @@ def read_file(path: os.PathLike):
                 counter += test_int
             if pyo.check_again(test_int, operands_int) > 0:
                 counter_2 += test_int
-    print(counter)
-    print(counter_2)
+    return counter, counter_2
 
 
 if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("input_file", type=Path)
     args = p.parse_args()
-    read_file(args.input_file)
+    print(read_file(args.input_file))
