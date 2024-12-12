@@ -2,34 +2,26 @@ use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 
 #[pyfunction]
-fn check_operators(test_value: u64, operands: Vec<u64>) -> u16 {
+fn check_operators(test_value: u64, operands: Vec<u64>) -> bool {
     let num_operands = operands.len();
     assert_ne!(num_operands, 0);
     assert_ne!(num_operands, 1);
     let num_operators = num_operands - 1;
     let combinations = 2_u16.pow(num_operators as u32);
-    let working_combinations = (0..combinations)
-        .into_iter()
-        .filter_map(|comb| {
-            let first = operands[0];
-            let equation = operands[1..]
-                .iter()
-                .enumerate()
-                .fold(first, |acc, (pow, val)| {
-                    if 2_u16.pow(pow as u32) & comb > 0 {
-                        acc * val
-                    } else {
-                        acc + val
-                    }
-                });
-            if equation == test_value {
-                Some(comb)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<u16>>();
-    working_combinations.len() as u16
+    (0..combinations).any(|comb| {
+        let first = operands[0];
+        let equation = operands[1..]
+            .iter()
+            .enumerate()
+            .fold(first, |acc, (pow, val)| {
+                if 2_u16.pow(pow as u32) & comb > 0 {
+                    acc * val
+                } else {
+                    acc + val
+                }
+            });
+        equation == test_value
+    })
 }
 
 fn get_base_3_bit(comb: u32, pow: u32) -> u32 {
@@ -80,39 +72,30 @@ mod test {
     fn test_merge(#[case] lhs: u64, #[case] rhs: u64, #[case] result: u64) {
         assert_eq!(merge(lhs, &rhs), result);
     }
-
 }
 
 #[pyfunction]
-fn check_again(test_value: u64, operands: Vec<u64>) -> u32 {
+fn check_again(test_value: u64, operands: Vec<u64>) -> bool {
     let num_operands = operands.len();
     assert_ne!(num_operands, 0);
     assert_ne!(num_operands, 1);
     let num_operators = num_operands - 1;
     let combinations = 3_u32.pow(num_operators as u32);
-    let working_combinations = (0..combinations)
-        .into_iter()
-        .filter_map(|comb| {
-            let first = operands[0];
-            let equation = operands[1..]
-                .iter()
-                .enumerate()
-                .fold(first, |acc, (pow, val)| {
-                    match get_base_3_bit(comb, pow as u32) {
-                        1 => acc * val,
-                        0 => acc + val,
-                        2 => merge(acc, &val),
-                        _ => panic!("must not happen")
-                    }
-                });
-            if equation == test_value {
-                Some(comb)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<u32>>();
-    working_combinations.len() as u32
+    (0..combinations).any(|comb| {
+        let first = operands[0];
+        let equation = operands[1..]
+            .iter()
+            .enumerate()
+            .fold(first, |acc, (pow, val)| {
+                match get_base_3_bit(comb, pow as u32) {
+                    1 => acc * val,
+                    0 => acc + val,
+                    2 => merge(acc, val),
+                    _ => panic!("must not happen"),
+                }
+            });
+        equation == test_value
+    })
 }
 
 #[pymodule]
