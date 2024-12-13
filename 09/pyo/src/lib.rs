@@ -6,18 +6,6 @@ use pyo3::wrap_pyfunction;
 use pyo3_stub_gen::{define_stub_info_gatherer, derive::gen_stub_pyfunction};
 use rayon::prelude::*;
 
-static LOG: std::sync::OnceLock<()> = std::sync::OnceLock::new();
-
-fn init_log() {
-    LOG.get_or_init(|| {
-        stderrlog::new()
-            .verbosity(log::Level::Warn)
-            .timestamp(stderrlog::Timestamp::Off)
-            .init()
-            .unwrap()
-    });
-}
-
 fn get_file_loc_and_size(block_sizes: &[u8]) -> Vec<(u64, u8)> {
     block_sizes
         .iter()
@@ -53,7 +41,6 @@ fn checksum_files(locs: &[(u64, u8)]) -> u64 {
 #[gen_stub_pyfunction]
 #[pyfunction]
 fn defrag(block_sizes: Vec<u8>) -> u64 {
-    init_log();
     let mut files = get_file_loc_and_size(&block_sizes);
     let mut spaces = get_space_loc_and_size(&block_sizes);
 
@@ -76,7 +63,7 @@ fn defrag(block_sizes: Vec<u8>) -> u64 {
         } else {
             None
         };
-        if let (Some(pos_to_trim)) = need_to_trim {
+        if let Some(pos_to_trim) = need_to_trim {
             spaces.remove(pos_to_trim);
         }
     }
@@ -87,7 +74,6 @@ fn defrag(block_sizes: Vec<u8>) -> u64 {
 #[gen_stub_pyfunction]
 #[pyfunction]
 fn checksum(block_sizes: Vec<u8>) -> u64 {
-    init_log();
     // let disc_size: u64 = (&block_sizes).iter().map(|x| *x as u64).sum();
     let occupied: u64 = block_sizes.iter().step_by(2).map(|x| *x as u64).sum();
     let mut just_files: Vec<(usize, u8)> =
@@ -191,6 +177,7 @@ mod test {
 
 #[pymodule]
 fn pyo(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    pyo3_log::init();
     m.add_function(wrap_pyfunction!(checksum, m)?)?;
     m.add_function(wrap_pyfunction!(defrag, m)?)
 }
