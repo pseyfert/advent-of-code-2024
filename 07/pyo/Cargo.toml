@@ -5,10 +5,15 @@ edition = "2021"
 
 [lib]
 name = "pyo"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "stubgen"
+path = "./src/stub_gen.rs"
 
 [dependencies]
 pyo3 = "0.23.3"
+pyo3-stub-gen = "0.6.1"
 
 [dev-dependencies]
 rstest = "0.23.0"

@@ -1,6 +1,8 @@
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
+use pyo3_stub_gen::{derive::gen_stub_pyfunction, define_stub_info_gatherer};
 
+#[gen_stub_pyfunction]
 #[pyfunction]
 fn check_operators(test_value: u64, operands: Vec<u64>) -> bool {
     let num_operands = operands.len();
@@ -74,6 +76,7 @@ mod test {
     }
 }
 
+#[gen_stub_pyfunction]
 #[pyfunction]
 fn check_again(test_value: u64, operands: Vec<u64>) -> bool {
     let num_operands = operands.len();
@@ -103,3 +106,5 @@ fn pyo(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(check_operators, m)?)?;
     m.add_function(wrap_pyfunction!(check_again, m)?)
 }
+
+define_stub_info_gatherer!(stub_info);
