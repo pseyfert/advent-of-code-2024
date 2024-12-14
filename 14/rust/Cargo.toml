@@ -1,0 +1,12 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = "1.0.216"
+serde_linewise = { version = "0.1.0", path = "../../utils/serde_linewise" }
+
+[dev-dependencies]
+rstest = "0.23.0"
+serde_plain = "1.0.2"
