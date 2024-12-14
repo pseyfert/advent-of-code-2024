@@ -45,9 +45,9 @@ fn part2(list1: Vec<u32>, list2: Vec<u32>) -> u32 {
         .iter()
         // .par_iter()
         .map(|loc| {
-            let rv = list2
+            let maybe_first_pos = list2.partition_point(|x| x < loc);
+            let rv = list2[maybe_first_pos..]
                 .iter()
-                .skip_while(|x| *x < loc)
                 .take_while(|x| *x == loc)
                 .count() as u32
                 * loc;

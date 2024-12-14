@@ -559,7 +559,6 @@ dependencies = [
 name = "pyo_stuff"
 version = "0.1.0"
 dependencies = [
- "itertools",
  "log",
  "pyo3",
  "pyo3-stub-gen",

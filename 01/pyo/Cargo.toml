@@ -12,7 +12,6 @@ name = "stubgen"
 path = "./src/stub_gen.rs"
 
 [dependencies]
-itertools = "0.13.0"
 log = "0.4.22"
 pyo3 = "0.23.3"
 stderrlog = "0.6.0"
