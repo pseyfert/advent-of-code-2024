@@ -1,0 +1,10 @@
+[package]
+name = "serde_linewise"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.94"
+itertools = "0.13.0"
+serde = "1.0.216"
+thiserror = "2.0.7"
