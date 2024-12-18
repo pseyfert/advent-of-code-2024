@@ -1,0 +1,10 @@
+[package]
+name = "group_into"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+enum-map = { version = "2.7.3", optional = true }
+
+[features]
+enum-map = ["dep:enum-map"]

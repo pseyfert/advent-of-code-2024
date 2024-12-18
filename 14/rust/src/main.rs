@@ -1,3 +1,6 @@
+use itertools::Itertools;
+use log::{debug, error};
+use rayon::prelude::*;
 use serde::{de, Deserialize};
 
 impl<'de> Deserialize<'de> for Robot {
@@ -72,12 +75,6 @@ struct Pos {
     y: i32,
 }
 
-impl Pos {
-    fn normalize(&self) {
-        todo!();
-    }
-}
-
 #[derive(Debug, Eq, PartialEq)]
 struct Vel {
     x: i32,
@@ -90,4 +87,117 @@ struct Robot {
     vel: Vel,
 }
 
-fn main() {}
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+#[allow(non_camel_case_types)]
+enum Quadrant {
+    xy,
+    xY,
+    Xy,
+    XY,
+    Boarder,
+}
+
+impl From<Pos> for Quadrant {
+    fn from(p: Pos) -> Self {
+        match (p.x, p.y) {
+            (0..=49, 0..=50) => Quadrant::xy,
+            (0..=49, 52..=102) => Quadrant::xY,
+            (51..=100, 0..=50) => Quadrant::Xy,
+            (51..=100, 52..=102) => Quadrant::XY,
+            (50, _) | (_, 51) => Quadrant::Boarder,
+            _ => panic!(),
+        }
+    }
+}
+
+impl Robot {
+    fn project(&self, steps: usize) -> Pos {
+        fn trunk(p: i32, v: i32, steps: i32, dim: i32) -> i32 {
+            let effective_num_steps = steps.rem_euclid(dim);
+            let effective_move = (v * effective_num_steps).rem_euclid(dim);
+            (p + effective_move).rem_euclid(dim)
+        }
+
+        Pos {
+            x: trunk(self.initial_pos.x, self.vel.x, steps as i32, 101),
+            y: trunk(self.initial_pos.y, self.vel.y, steps as i32, 103),
+        }
+    }
+
+    #[allow(dead_code)]
+    fn move_mut(&mut self, steps: usize) {
+        self.initial_pos = self.project(steps);
+    }
+}
+
+fn main_fn() -> anyhow::Result<()> {
+    let input = aoc_cli::setup_and_input()?;
+    // TODO: should use Reader.
+    let mut start: Vec<Robot> = serde_linewise::from_str(&std::fs::read_to_string(input)?)?;
+
+    let counts = std::collections::HashMap::<Quadrant, usize>::new();
+
+    // TODO: why?
+    // let em = group_into::group_into::<_, _, _, _, enum_map::EnumMap<_, _>>(
+    let em = group_into::group_into_hash_map(
+        start
+            .par_iter()
+            .map(|r| -> Quadrant { r.project(100).into() })
+            .filter(|q| *q != Quadrant::Boarder)
+            .collect::<Vec<_>>() // TODO: compatibility issue
+            // also: just count, no need to create the group
+            .into_iter(),
+        |q| q.clone(),
+    );
+    // group_by totally doesn't do what i think it does
+    // .group_by(|q| q.clone())
+    let part_one = em
+        .into_iter() // TODO: no par_ here?
+        .map(|(_key, group)| (_key, group.into_iter().count() as i128))
+        .map(|(k, c)| {
+            debug!("in quadrant {k:?} there are {c} robots");
+            c
+        })
+        .product::<i128>();
+
+    println!("part 1: {part_one}");
+
+    for i in 0..=(101 * 103) {
+        start.par_iter_mut().for_each(|r| r.move_mut(1));
+        let em = group_into::group_into_hash_map(
+            start
+                .par_iter()
+                .map(|r| (r.initial_pos.x - 50, r.initial_pos.y))
+                .collect::<Vec<_>>()
+                .into_iter(),
+            |p| p.1,
+        );
+        if em.values().all(|xs| {
+            let (negs, mut pos): (Vec<_>, Vec<_>) = xs
+                .into_iter()
+                .map(|p| p.0)
+                .filter(|x| *x != 0)
+                .partition(|x| *x < 0);
+            let mut negs: Vec<_> = negs.into_iter().map(|x| -x).collect();
+            pos.sort();
+            negs.sort();
+            negs == pos
+        }) {
+            println!("got a tree for {i}");
+        }
+    }
+
+    Ok(())
+}
+
+fn main() -> std::process::ExitCode {
+    match main_fn() {
+        Ok(()) => std::process::ExitCode::SUCCESS,
+        Err(e) => {
+            // Does this work in case of failure to set up logging?
+            // You know what? I don't care.
+            error!("Program failed: {e:?}");
+            std::process::ExitCode::from(1)
+        }
+    }
+}
