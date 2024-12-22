@@ -9,6 +9,11 @@ edition = "2021"
 # path = "./src/main.rs"
 
 [dependencies]
+anyhow = "1.0.95"
+aoc_cli = { version = "0.1.0", path = "../../utils/aoc_cli" }
+log = "0.4.22"
+serde = "1.0.216"
+serde_linewise = { version = "0.1.0", path = "../../utils/serde_linewise" }
 
 [build-dependencies]
 bindgen = "0.71.1"

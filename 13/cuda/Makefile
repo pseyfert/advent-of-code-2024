@@ -6,6 +6,9 @@ DEPDIR := .deps
 
 all: libmycuda.a
 
+run: all
+	LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/2024/cuda/12.6/targets/x86_64-linux/lib/ cargo run -- ../input_mod.txt
+
 rust: libmycuda.a
 	cargo build
 
@@ -59,7 +62,10 @@ DEPFILES += $(CUSRCS:%.cc=$(DEPDIR)/%.d)
 $(DEPFILES):
 include $(wildcard $(DEPFILES))
 
-clean:
+rust_clean:
+	cargo clean
+
+clean: rust_clean
 	rm -f *_test main *.o libmycuda.a
 
 .PHONY: clean all rust

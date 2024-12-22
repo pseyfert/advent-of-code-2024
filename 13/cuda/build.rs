@@ -4,6 +4,8 @@ fn main() {
     println!("cargo:rustc-link-lib=static=mycuda");
     println!("cargo:rustc-link-lib=cudart");
     println!("cargo:rustc-link-lib=cudadevrt");
+    println!("cargo:rustc-link-lib=stdc++");
+    println!("cargo::rerun-if-changed=libmycuda.a");
 
     let bindings = bindgen::Builder::default()
         .header("c_interface.h")

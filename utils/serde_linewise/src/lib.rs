@@ -3,7 +3,7 @@ use thiserror::Error;
 use serde::de::{self, Deserialize, DeserializeSeed, IntoDeserializer, SeqAccess, Visitor};
 
 #[derive(Error, Debug)]
-#[error("something went wrong reading a file line by line")]
+#[error("something went wrong reading a file line by line: {some_message:?}")]
 pub struct Error {
     some_message: String,
 }
