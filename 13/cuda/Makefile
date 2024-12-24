@@ -1,13 +1,13 @@
 # equivalent, it seems
-NVCC_CCBIN=/usr/bin/gcc-13
-NVCC=/opt/nvidia/hpc_sdk/Linux_x86_64/2024/compilers/bin/nvcc
+NVCC_CCBIN=/usr/bin/gcc-12
+NVCC=/opt/nvidia/hpc_sdk/Linux_x86_64/2023/compilers/bin/nvcc
 
 DEPDIR := .deps
 
 all: libmycuda.a
 
 run: all
-	LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/2024/cuda/12.6/targets/x86_64-linux/lib/ cargo run -- ../input_mod.txt
+	LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/2023/cuda/12.2/targets/x86_64-linux/lib/ cargo run -- ../input_mod.txt
 
 rust: libmycuda.a
 	cargo build
@@ -17,9 +17,9 @@ NVCCLINKFLAGS=-ccbin=$(NVCC_CCBIN) --gpu-code sm_75 --gpu-architecture compute_7
 
 NVLDLIBS=-lcudadevrt
 
-NVPPFLAGS=-I/opt/nvidia/hpc_sdk/Linux_x86_64/2024/compilers/include
+NVPPFLAGS=-I/opt/nvidia/hpc_sdk/Linux_x86_64/2023/compilers/include
 
-CPPFLAGS=-I/opt/nvidia/hpc_sdk/Linux_x86_64/2024/cuda/include/
+CPPFLAGS=-I/opt/nvidia/hpc_sdk/Linux_x86_64/2023/cuda/include/
 
 CXXFLAGS=-Wall -Wextra -std=c++20 -O3
 

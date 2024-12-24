@@ -33,7 +33,7 @@ __global__ void run_claw(
         continue;
       if (Ty[threadIdx.x] == reaches_y) {
         res[threadIdx.x] = tokens;
-        printf("machine %d can be won with %d tokens\n", threadIdx.x, tokens);
+        // printf("machine %d can be won with %d tokens\n", threadIdx.x, tokens);
         break;
       }
     }

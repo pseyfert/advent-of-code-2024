@@ -34,7 +34,7 @@ __host__ void CubDebugExitPrintImpl(
 
 int pass(int* Ax, int* Bx, int* Ay, int* By, int* Tx, int* Ty, int size) {
 
-  printf("okay let's do some work for size %d\n", size);
+  // printf("okay let's do some work for size %d\n", size);
 
   int* dev_ax;
   int* dev_ay;
@@ -52,7 +52,7 @@ int pass(int* Ax, int* Bx, int* Ay, int* By, int* Tx, int* Ty, int size) {
   CubDebugExit(cudaMalloc(&dev_ty, size * sizeof(int)));
   CubDebugExit(cudaMalloc(&res, size * sizeof(int)));
 
-  printf("init half done\n");
+  // printf("init half done\n");
 
   CubDebugExit(cudaMemcpy( dev_ax, Ax, size * sizeof(int), cudaMemcpyHostToDevice));
   CubDebugExit(cudaMemcpy( dev_ay, Ay, size * sizeof(int), cudaMemcpyHostToDevice));
@@ -61,17 +61,17 @@ int pass(int* Ax, int* Bx, int* Ay, int* By, int* Tx, int* Ty, int size) {
   CubDebugExit(cudaMemcpy( dev_tx, Tx, size * sizeof(int), cudaMemcpyHostToDevice));
   CubDebugExit(cudaMemcpy( dev_ty, Ty, size * sizeof(int), cudaMemcpyHostToDevice));
   
-  printf("init done\n");
+  // printf("init done\n");
 
   run_claw<<<1, size>>>(dev_ax, dev_bx, dev_ay, dev_by, dev_tx, dev_ty, res);
 
-  printf("call done\n");
+  // printf("call done\n");
 
   CubDebugExitPrint(cudaPeekAtLastError());
   CubDebugExitPrint(cudaDeviceSynchronize());
   CubDebugExitPrint(cudaPeekAtLastError());
 
-  printf("sync done\n");
+  // printf("sync done\n");
 
   auto t = thrust::reduce(thrust::device, res, res+size, 0, thrust::plus<int>());
 
