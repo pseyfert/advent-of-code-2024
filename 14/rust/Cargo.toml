@@ -13,6 +13,7 @@ serde = "1.0.216"
 serde_linewise = { version = "0.1.0", path = "../../utils/serde_linewise" }
 group_into = { version = "0.1.0", path = "../../utils/group_into", features = ["enum-map"] }
 enum-map = "2.7.3"
+boiler_plate = { version = "0.1.0", path = "../../utils/boiler_plate" }
 
 [dev-dependencies]
 rstest = "0.23.0"

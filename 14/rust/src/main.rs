@@ -1,7 +1,7 @@
-use itertools::Itertools;
-use log::{debug, error};
+use log::debug;
 use rayon::prelude::*;
 use serde::{de, Deserialize};
+use std::path::Path;
 
 impl<'de> Deserialize<'de> for Robot {
     fn deserialize<D>(deserializer: D) -> Result<Robot, D::Error>
@@ -130,74 +130,70 @@ impl Robot {
     }
 }
 
-fn main_fn() -> anyhow::Result<()> {
-    let input = aoc_cli::setup_and_input()?;
-    // TODO: should use Reader.
-    let mut start: Vec<Robot> = serde_linewise::from_str(&std::fs::read_to_string(input)?)?;
+struct Day14 {}
 
-    let counts = std::collections::HashMap::<Quadrant, usize>::new();
+impl boiler_plate::Day for Day14 {
+    type Parsed = Vec<Robot>;
 
-    // TODO: why?
-    // let em = group_into::group_into::<_, _, _, _, enum_map::EnumMap<_, _>>(
-    let em = group_into::group_into_hash_map(
-        start
-            .par_iter()
-            .map(|r| -> Quadrant { r.project(100).into() })
-            .filter(|q| *q != Quadrant::Boarder)
-            .collect::<Vec<_>>() // TODO: compatibility issue
-            // also: just count, no need to create the group
-            .into_iter(),
-        |q| q.clone(),
-    );
-    // group_by totally doesn't do what i think it does
-    // .group_by(|q| q.clone())
-    let part_one = em
-        .into_iter() // TODO: no par_ here?
-        .map(|(_key, group)| (_key, group.into_iter().count() as i128))
-        .map(|(k, c)| {
-            debug!("in quadrant {k:?} there are {c} robots");
-            c
-        })
-        .product::<i128>();
+    fn parse(p: impl AsRef<Path>) -> anyhow::Result<Vec<Robot>> {
+        Ok(serde_linewise::from_str(&std::fs::read_to_string(p)?)?)
+    }
 
-    println!("part 1: {part_one}");
-
-    for i in 0..=(101 * 103) {
-        start.par_iter_mut().for_each(|r| r.move_mut(1));
+    fn process(mut start: Vec<Robot>) -> anyhow::Result<()> {
+        // TODO: why?
+        // let em = group_into::group_into::<_, _, _, _, enum_map::EnumMap<_, _>>(
         let em = group_into::group_into_hash_map(
             start
                 .par_iter()
-                .map(|r| (r.initial_pos.x - 50, r.initial_pos.y))
-                .collect::<Vec<_>>()
+                .map(|r| -> Quadrant { r.project(100).into() })
+                .filter(|q| *q != Quadrant::Boarder)
+                .collect::<Vec<_>>() // TODO: compatibility issue
+                // also: just count, no need to create the group
                 .into_iter(),
-            |p| p.1,
+            |q| q.clone(),
         );
-        if em.values().all(|xs| {
-            let (negs, mut pos): (Vec<_>, Vec<_>) = xs
-                .into_iter()
-                .map(|p| p.0)
-                .filter(|x| *x != 0)
-                .partition(|x| *x < 0);
-            let mut negs: Vec<_> = negs.into_iter().map(|x| -x).collect();
-            pos.sort();
-            negs.sort();
-            negs == pos
-        }) {
-            println!("got a tree for {i}");
-        }
-    }
+        // group_by totally doesn't do what i think it does
+        // .group_by(|q| q.clone())
+        let part_one = em
+            .into_iter() // TODO: no par_ here?
+            .map(|(_key, group)| (_key, group.into_iter().count() as i128))
+            .map(|(k, c)| {
+                debug!("in quadrant {k:?} there are {c} robots");
+                c
+            })
+            .product::<i128>();
 
-    Ok(())
+        println!("part 1: {part_one}");
+
+        for i in 0..=(101 * 103) {
+            start.par_iter_mut().for_each(|r| r.move_mut(1));
+            let em = group_into::group_into_hash_map(
+                start
+                    .par_iter()
+                    .map(|r| (r.initial_pos.x - 50, r.initial_pos.y))
+                    .collect::<Vec<_>>()
+                    .into_iter(),
+                |p| p.1,
+            );
+            if em.values().all(|xs| {
+                let (negs, mut pos): (Vec<_>, Vec<_>) = xs
+                    .into_iter()
+                    .map(|p| p.0)
+                    .filter(|x| *x != 0)
+                    .partition(|x| *x < 0);
+                let mut negs: Vec<_> = negs.into_iter().map(|x| -x).collect();
+                pos.sort();
+                negs.sort();
+                negs == pos
+            }) {
+                println!("got a tree for {i}");
+            }
+        }
+
+        Ok(())
+    }
 }
 
 fn main() -> std::process::ExitCode {
-    match main_fn() {
-        Ok(()) => std::process::ExitCode::SUCCESS,
-        Err(e) => {
-            // Does this work in case of failure to set up logging?
-            // You know what? I don't care.
-            error!("Program failed: {e:?}");
-            std::process::ExitCode::from(1)
-        }
-    }
+    boiler_plate::main_wrap::<Day14>()
 }
