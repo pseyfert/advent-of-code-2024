@@ -1,7 +1,6 @@
 use log::debug;
 use rayon::prelude::*;
 use serde::{de, Deserialize};
-use std::path::Path;
 
 impl<'de> Deserialize<'de> for Robot {
     fn deserialize<D>(deserializer: D) -> Result<Robot, D::Error>
@@ -133,11 +132,8 @@ impl Robot {
 struct Day14 {}
 
 impl boiler_plate::Day for Day14 {
-    type Parsed = Vec<Robot>;
-
-    fn parse(p: impl AsRef<Path>) -> anyhow::Result<Vec<Robot>> {
-        Ok(serde_linewise::from_str(&std::fs::read_to_string(p)?)?)
-    }
+    type Desered = Vec<Robot>;
+    // type Parsed = Self::Desered;
 
     fn process(mut start: Vec<Robot>) -> anyhow::Result<()> {
         // TODO: why?
