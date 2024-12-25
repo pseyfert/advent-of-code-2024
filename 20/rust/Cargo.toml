@@ -1,0 +1,12 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.95"
+boiler_plate = { version = "0.1.0", path = "../../utils/boiler_plate" }
+grid = { version = "0.1.0", path = "../../utils/grid" }
+log = "0.4.22"
+mdarray = "0.6.1"
+pathfinding = "4.12.0"

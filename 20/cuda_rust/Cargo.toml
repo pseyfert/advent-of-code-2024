@@ -1,0 +1,11 @@
+[package]
+name = "cuda"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+boiler_plate = { version = "0.1.0", path = "../../utils/boiler_plate" }
+
+[build-dependencies]
+bindgen = "0.71.1"
