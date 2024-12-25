@@ -21,7 +21,7 @@ fn main_fn<T: Day>() -> anyhow::Result<()> {
     let parsed: T::Parsed = T::parse(T::deser(input)?)?;
     debug!("parsed, let's process");
 
-    T::process(parsed)?;
+    T::process(&parsed)?;
 
     Ok(())
 }
@@ -41,5 +41,5 @@ pub trait Day {
         
         Ok(desered.into())
     }
-    fn process(_: Self::Parsed) -> anyhow::Result<()>;
+    fn process(_: &Self::Parsed) -> anyhow::Result<()>;
 }

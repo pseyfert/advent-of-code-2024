@@ -179,7 +179,7 @@ pub enum Direction {
 }
 
 pub fn manhattan(lhs: &GridPoint, rhs: &GridPoint) -> usize {
-    lhs.x.abs_diff(rhs.x) + lhs.y.abs_diff(lhs.y)
+    lhs.x.abs_diff(rhs.x) + lhs.y.abs_diff(rhs.y)
 }
 
 impl GridPoint<'_> {

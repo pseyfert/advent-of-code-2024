@@ -1,3 +1,7 @@
+#![feature(test)]
+
+extern crate test;
+
 use log::{debug, trace};
 
 struct Day20 {}
@@ -9,6 +13,20 @@ enum CheatStatus {
     Cheated,
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::{black_box, Bencher};
+
+    #[bench]
+    fn bench_wrap(b: &mut Bencher) {
+        use boiler_plate::Day;
+        let input = Day20::parse(Day20::deser("../input.txt").unwrap()).unwrap();
+
+        b.iter(|| black_box(Day20::part1(&input)))
+    }
+}
+
 impl boiler_plate::Day for Day20 {
     fn parse(desered: Self::Desered) -> anyhow::Result<Self::Parsed> {
         trace!("{desered:?}");
@@ -18,7 +36,17 @@ impl boiler_plate::Day for Day20 {
     type Desered = Vec<String>;
     type Parsed = grid::Maze;
 
-    fn process(g: grid::Maze) -> anyhow::Result<()> {
+    fn process(g: &grid::Maze) -> anyhow::Result<()> {
+        let part1 = Self::part1(&g)?;
+        println!("there should be about {part1} shortcuts");
+        let part2 = Self::part2(&g)?;
+        println!("there should be about {part2} longer shortcuts");
+        Ok(())
+    }
+}
+
+impl Day20 {
+    fn initial<'a>(g: &'a grid::Maze) -> anyhow::Result<(Vec<grid::GridPoint<'a>>, u32)> {
         let start = g
             .start()
             .ok_or(anyhow::anyhow!("didn't find start in maze"))?;
@@ -42,14 +70,57 @@ impl boiler_plate::Day for Day20 {
         .next() else {
             return Err(anyhow::anyhow!("somehow could but couldn't find the path"));
         };
+        Ok((initial_path, base_cost))
+    }
 
+    fn cost_lookup<'a>(
+        g: &'a grid::Maze,
+        initial_path: &Vec<grid::GridPoint<'a>>,
+        base_cost: u32,
+    ) -> mdarray::DGrid<usize, 2> {
         let mut cost_lookup = mdarray::DGrid::<usize, 2>::new();
         cost_lookup.resize([g.grid.dim_x, g.grid.dim_y], 0);
 
         for (dist_from_start, point) in initial_path.iter().enumerate() {
             cost_lookup[[point.x, point.y]] = dist_from_start;
         }
-        let part1 = initial_path
+
+        cost_lookup
+    }
+    fn part2(g: &grid::Maze) -> anyhow::Result<usize> {
+        let (initial_path, base_cost) = Self::initial(&g)?;
+
+        Ok(initial_path
+            .iter()
+            .enumerate()
+            .take_while(|(i, _)| (*i as u32) < base_cost - 100)
+            .map(|(i, p1)| {
+                initial_path
+                    .iter()
+                    .enumerate()
+                    .skip(i + 101)
+                    .filter(|(j, p2)| {
+                        let cheat_length = grid::manhattan(p1, p2);
+                        if cheat_length > 20 {
+                            return false;
+                        }
+                        if i < 1 && base_cost - 50 < *j as u32 {
+                            debug!("testing a cheat {i}: {p1:?} → {j}: {p2:?} of length {cheat_length}");
+                        }
+                        let (gain, allowed) = (j - i).overflowing_sub(cheat_length);
+                        !allowed && (gain >= 100)
+                    })
+                    .count()
+            })
+            .sum::<usize>())
+    }
+
+    fn part1(g: &grid::Maze) -> anyhow::Result<usize> {
+        let (initial_path, base_cost) = Self::initial(&g)?;
+
+        let cost_lookup = Self::cost_lookup(&g, &initial_path, base_cost);
+
+        Ok(initial_path
             .iter()
             .enumerate()
             .take_while(|(i, _)| (*i as u32) < base_cost - 100)
@@ -68,9 +139,7 @@ impl boiler_plate::Day for Day20 {
                     .filter(|p| cost_lookup[[p.x, p.y]] >= c + 102)
                     .count()
             })
-            .sum::<usize>();
-
-        println!("there should be about {part1} shortcuts");
+            .sum::<usize>())
 
         // // TODO: why does astar_bag blow up?
         // let mut hmmm = std::collections::HashMap::new();
@@ -135,8 +204,6 @@ impl boiler_plate::Day for Day20 {
         // };
         //
         // debug!("{cheats:?}");
-
-        Ok(())
     }
 }
 
