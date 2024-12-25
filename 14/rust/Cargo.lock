@@ -620,11 +620,8 @@ name = "rust"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "aoc_cli",
  "boiler_plate",
- "enum-map",
  "group_into",
- "itertools",
  "log",
  "rayon",
  "rstest",
