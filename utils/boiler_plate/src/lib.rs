@@ -80,6 +80,15 @@ macro_rules! bench_parts {
     };
 }
 
+#[macro_export]
+macro_rules! main {
+    ($DayType:ty) => {
+        fn main() -> std::process::ExitCode {
+            boiler_plate::main_wrap::<$DayType>()
+        }
+    };
+}
+
 /// This macro is to support data types that already exist somewhere.
 #[macro_export]
 macro_rules! just_wrap {

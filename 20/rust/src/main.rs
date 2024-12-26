@@ -192,6 +192,4 @@ impl Day20 {
     }
 }
 
-fn main() -> std::process::ExitCode {
-    boiler_plate::main_wrap::<Day20>()
-}
+boiler_plate::main!(Day20);
