@@ -79,3 +79,19 @@ macro_rules! bench_parts {
         }
     };
 }
+
+/// This macro is to support data types that already exist somewhere.
+#[macro_export]
+macro_rules! just_wrap {
+    ($OutType:ident, $InType:ty) => {
+        struct $OutType {
+            data: $InType,
+        }
+
+        impl From<<$OutType as boiler_plate::Day>::Desered> for $OutType {
+            fn from(vs: <$OutType as boiler_plate::Day>::Desered) -> $OutType {
+                $OutType { data: vs.into() }
+            }
+        }
+    };
+}

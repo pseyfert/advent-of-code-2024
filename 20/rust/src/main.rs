@@ -5,15 +5,8 @@ extern crate test;
 use log::{debug, trace};
 use rayon::prelude::*;
 
-struct Day20 {
-    g: grid::Maze,
-}
-
-impl From<Vec<String>> for Day20 {
-    fn from(vs: Vec<String>) -> Day20 {
-        Day20 { g: vs.into() }
-    }
-}
+boiler_plate::just_wrap!(Day20, grid::Maze);
+boiler_plate::bench_parts!(Day20, "../input.txt");
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 enum CheatStatus {
@@ -22,26 +15,9 @@ enum CheatStatus {
     Cheated,
 }
 
-boiler_plate::bench_parts!(Day20, "../input.txt");
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use boiler_plate::Day;
-//     use test::Bencher;
-//
-//     #[bench]
-//     fn bench_wrap1(b: &mut Bencher) {
-//         Day20::bench_part1(b, "../input.txt");
-//     }
-//     #[bench]
-//     fn bench_wrap2(b: &mut Bencher) {
-//         Day20::bench_part2(b, "../input.txt");
-//     }
-// }
-
 impl boiler_plate::Day for Day20 {
     fn part2(&self) -> anyhow::Result<u64> {
-        let (initial_path, base_cost) = Self::initial(&self.g)?;
+        let (initial_path, base_cost) = Self::initial(&self.data)?;
 
         let potential_starts = &initial_path[0..(base_cost - 100) as usize];
         Ok(potential_starts
@@ -80,9 +56,9 @@ impl boiler_plate::Day for Day20 {
     }
 
     fn part1(&self) -> anyhow::Result<u64> {
-        let (initial_path, base_cost) = Self::initial(&self.g)?;
+        let (initial_path, base_cost) = Self::initial(&self.data)?;
 
-        let cost_lookup = Self::cost_lookup(&self.g, &initial_path);
+        let cost_lookup = Self::cost_lookup(&self.data, &initial_path);
 
         Ok(initial_path
             .iter()
