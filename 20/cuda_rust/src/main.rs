@@ -2,7 +2,7 @@ pub mod binding;
 // pub mod read_mod;
 use crate::binding::pass;
 
-struct Data {
+struct Day20 {
     maze: Vec<i32>,
     goal_x: i32,
     goal_y: i32,
@@ -10,18 +10,8 @@ struct Data {
     cols: usize,
 }
 
-impl From<Vec<String>> for Data {
-    fn from(_: Vec<String>) -> Data {
-        // TODO: this is silly. Overriding parse is pointless.
-        panic!();
-    }
-}
-
-impl boiler_plate::Day for Day20 {
-    type Desered = Vec<String>;
-    type Parsed = Data;
-
-    fn parse(input: Self::Desered) -> anyhow::Result<Self::Parsed> {
+impl From<Vec<String>> for Day20 {
+    fn from(input: Vec<String>) -> Day20 {
         let rows = input.len();
         let cols = input[0].len();
 
@@ -49,33 +39,33 @@ impl boiler_plate::Day for Day20 {
         }
         assert!(goal_x >= 0);
         assert!(goal_y >= 0);
-        Ok(Data {
+        Self {
             maze: m,
             goal_x,
             goal_y,
             rows,
             cols,
-        })
+        }
     }
+}
 
-    fn process(mut data: Self::Parsed) -> anyhow::Result<()> {
+impl boiler_plate::Day for Day20 {
+    type Desered = Vec<String>;
+
+    fn part1(&self) -> anyhow::Result<u64> {
         let res = unsafe {
             pass(
-                data.maze.as_mut_ptr(),
-                data.goal_x,
-                data.goal_y,
-                data.rows as i32,
-                data.cols as i32,
+                self.maze.as_ptr(),
+                self.goal_x,
+                self.goal_y,
+                self.rows as i32,
+                self.cols as i32,
             )
         };
         println!("result might be something like {res}");
 
-        Ok(())
+        Ok(res as u64)
     }
 }
 
-struct Day20 {}
-
-fn main() -> std::process::ExitCode {
-    boiler_plate::main_wrap::<Day20>()
-}
+boiler_plate::main!(Day20);

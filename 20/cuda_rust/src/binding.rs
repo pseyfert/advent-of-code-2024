@@ -2,7 +2,7 @@
 
 unsafe extern "C" {
     pub fn pass(
-        grid: *mut ::std::os::raw::c_int,
+        grid: *const ::std::os::raw::c_int,
         goal_x: ::std::os::raw::c_int,
         goal_y: ::std::os::raw::c_int,
         rows: ::std::os::raw::c_int,

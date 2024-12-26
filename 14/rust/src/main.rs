@@ -1,6 +1,12 @@
-use log::debug;
+#![feature(test)]
+
+extern crate test;
+
+use log::{debug, error};
 use rayon::prelude::*;
 use serde::{de, Deserialize};
+
+boiler_plate::bench_parts!(Day14, "../input.txt");
 
 impl<'de> Deserialize<'de> for Robot {
     fn deserialize<D>(deserializer: D) -> Result<Robot, D::Error>
@@ -43,7 +49,7 @@ impl<'de> Deserialize<'de> for Robot {
 }
 
 #[cfg(test)]
-mod test {
+mod unit_tests {
     use super::*;
     use rstest::rstest;
 
@@ -68,19 +74,19 @@ mod test {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct Pos {
     x: i32,
     y: i32,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct Vel {
     x: i32,
     y: i32,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct Robot {
     initial_pos: Pos,
     vel: Vel,
@@ -129,17 +135,17 @@ impl Robot {
     }
 }
 
-struct Day14 {}
+boiler_plate::just_wrap!(Day14, Vec<Robot>);
 
 impl boiler_plate::Day for Day14 {
     type Desered = Vec<Robot>;
     // type Parsed = Self::Desered;
 
-    fn process(mut start: Vec<Robot>) -> anyhow::Result<()> {
+    fn part1(&self) -> anyhow::Result<u64> {
         // TODO: why?
         // let em = group_into::group_into::<_, _, _, _, enum_map::EnumMap<_, _>>(
         let em = group_into::group_into_hash_map(
-            start
+            self.data
                 .par_iter()
                 .map(|r| -> Quadrant { r.project(100).into() })
                 .filter(|q| *q != Quadrant::Boarder)
@@ -160,6 +166,12 @@ impl boiler_plate::Day for Day14 {
             .product::<i128>();
 
         println!("part 1: {part_one}");
+        error!("sorry, wrong int type");
+        Ok(0)
+    }
+
+    fn part2(&self) -> anyhow::Result<u64> {
+        let mut start = self.data.clone();
 
         for i in 0..=(101 * 103) {
             start.par_iter_mut().for_each(|r| r.move_mut(1));
@@ -186,10 +198,8 @@ impl boiler_plate::Day for Day14 {
             }
         }
 
-        Ok(())
+        Ok(0)
     }
 }
 
-fn main() -> std::process::ExitCode {
-    boiler_plate::main_wrap::<Day14>()
-}
+boiler_plate::main!(Day14);

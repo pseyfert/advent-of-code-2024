@@ -20,7 +20,7 @@ __host__ void CubDebugExitPrintImpl(
   }
 }
 
-int run(int* grid, int goal_x, int goal_y, int rows, int cols) {
+int run(const int* grid, int goal_x, int goal_y, int rows, int cols) {
   thrust::device_vector<int> left_cheat(rows * cols, 0);
   thrust::device_vector<int> right_cheat(rows * cols, 0);
   thrust::device_vector<int> up_cheat(rows * cols, 0);

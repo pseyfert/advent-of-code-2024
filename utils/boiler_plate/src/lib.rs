@@ -63,7 +63,7 @@ pub trait Day: Sized {
 macro_rules! bench_parts {
     ($DayType:ty, $input:expr) => {
         #[cfg(test)]
-        mod tests {
+        mod benchmarks {
             use super::*;
             use boiler_plate::Day;
             use test::Bencher;

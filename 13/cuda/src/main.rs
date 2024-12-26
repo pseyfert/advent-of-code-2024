@@ -7,6 +7,9 @@ pub mod read_mod;
 
 use crate::binding::wrap;
 
+boiler_plate::just_wrap!(Day13, Vec<read_mod::Machine>);
+boiler_plate::main!(Day13);
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -37,8 +40,12 @@ mod tests {
 
 impl boiler_plate::Day for Day13 {
     type Desered = Vec<read_mod::Machine>;
-    fn process(machines: Self::Desered) -> anyhow::Result<()> {
-        let mut data = machines_to_raw_data(&machines);
+
+    fn part2(&self) -> anyhow::Result<u64> {
+        anyhow::bail!("not implemented");
+    }
+    fn part1(&self) -> anyhow::Result<u64> {
+        let mut data = machines_to_raw_data(&self.data);
 
         // Button A: X+94, Y+34
         // Button B: X+22, Y+67
@@ -62,7 +69,7 @@ impl boiler_plate::Day for Day13 {
         // let mut Tx = vec![8400, 1000];
         // let mut Ty = vec![5400, 1000];
 
-        println!("okay, let's look at {} machines", machines.len());
+        println!("okay, let's look at {} machines", self.data.len());
         let r = unsafe {
             wrap(
                 data.Ax.as_mut_ptr(),
@@ -75,14 +82,8 @@ impl boiler_plate::Day for Day13 {
             )
         };
         println!("{r}");
-        Ok(())
+        Ok(r as u64)
     }
-}
-
-struct Day13 {}
-
-fn main() -> std::process::ExitCode {
-    boiler_plate::main_wrap::<Day13>()
 }
 
 struct RawData {
