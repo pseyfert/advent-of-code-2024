@@ -23,7 +23,7 @@ fn main_fn<T: Day>() -> anyhow::Result<()> {
     let input = aoc_cli::setup_and_input()?;
     debug!("input path is clear, let's parse");
 
-    let parsed: T::Parsed = T::parse(T::deser(input)?)?;
+    let parsed: T = T::deser(input)?.into();
     debug!("parsed, let's process");
 
     T::process(&parsed)?;
@@ -31,30 +31,22 @@ fn main_fn<T: Day>() -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO: merge Day and Parsed into one type. That way, parse can be dropped and I only keep the
-// From.
 // TODO: rewrite such that TryFrom is sufficient.
-pub trait Day {
-    type Desered: for<'a> serde::de::Deserialize<'a>;
-    type Parsed: From<Self::Desered> = Self::Desered;
+pub trait Day: Sized {
+    type Desered: for<'a> serde::de::Deserialize<'a> + Into<Self>;
 
     fn deser(p: impl AsRef<Path>) -> anyhow::Result<Self::Desered> {
         Ok(serde_linewise::from_str(&std::fs::read_to_string(p)?)?)
     }
-    fn parse(desered: Self::Desered) -> anyhow::Result<Self::Parsed> {
-        debug!("deserialized, now convert");
-
-        Ok(desered.into())
-    }
-    fn process(p: &Self::Parsed) -> anyhow::Result<()> {
-        let part1 = Self::part1(&p)?;
+    fn process(p: &Self) -> anyhow::Result<()> {
+        let part1 = Self::part1(p)?;
         println!("Answer to part 1 {part1}.");
-        let part2 = Self::part2(&p)?;
+        let part2 = Self::part2(p)?;
         println!("Answer to part 2 {part2}.");
         Ok(())
     }
-    fn part1(_: &Self::Parsed) -> anyhow::Result<u64>;
-    fn part2(_: &Self::Parsed) -> anyhow::Result<u64> {
+    fn part1(&self) -> anyhow::Result<u64>;
+    fn part2(&self) -> anyhow::Result<u64> {
         Ok(0)
     }
 

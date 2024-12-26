@@ -5,7 +5,15 @@ extern crate test;
 use log::{debug, trace};
 use rayon::prelude::*;
 
-struct Day20 {}
+struct Day20 {
+    g: grid::Maze,
+}
+
+impl From<Vec<String>> for Day20 {
+    fn from(vs: Vec<String>) -> Day20 {
+        Day20 { g: vs.into() }
+    }
+}
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 enum CheatStatus {
@@ -31,8 +39,8 @@ mod tests {
 }
 
 impl boiler_plate::Day for Day20 {
-    fn part2(g: &grid::Maze) -> anyhow::Result<u64> {
-        let (initial_path, base_cost) = Self::initial(&g)?;
+    fn part2(&self) -> anyhow::Result<u64> {
+        let (initial_path, base_cost) = Self::initial(&self.g)?;
 
         let potential_starts = &initial_path[0..(base_cost - 100) as usize];
         Ok(potential_starts
@@ -70,10 +78,10 @@ impl boiler_plate::Day for Day20 {
             .sum::<u64>())
     }
 
-    fn part1(g: &grid::Maze) -> anyhow::Result<u64> {
-        let (initial_path, base_cost) = Self::initial(&g)?;
+    fn part1(&self) -> anyhow::Result<u64> {
+        let (initial_path, base_cost) = Self::initial(&self.g)?;
 
-        let cost_lookup = Self::cost_lookup(&g, &initial_path, base_cost);
+        let cost_lookup = Self::cost_lookup(&self.g, &initial_path);
 
         Ok(initial_path
             .iter()
@@ -90,7 +98,7 @@ impl boiler_plate::Day for Day20 {
                 let ne = p.north().and_then(|p| p.east());
                 [nn, nw, ww, sw, ss, se, ee, ne]
                     .into_iter()
-                    .filter_map(|o| o)
+                    .flatten()
                     .filter(|p| cost_lookup[[p.x, p.y]] >= c + 102)
                     .count() as u64
             })
@@ -162,11 +170,10 @@ impl boiler_plate::Day for Day20 {
     }
 
     type Desered = Vec<String>;
-    type Parsed = grid::Maze;
 }
 
 impl Day20 {
-    fn initial<'a>(g: &'a grid::Maze) -> anyhow::Result<(Vec<grid::GridPoint<'a>>, u32)> {
+    fn initial(g: &grid::Maze) -> anyhow::Result<(Vec<grid::GridPoint<'_>>, u32)> {
         let start = g
             .start()
             .ok_or(anyhow::anyhow!("didn't find start in maze"))?;
@@ -196,7 +203,6 @@ impl Day20 {
     fn cost_lookup<'a>(
         g: &'a grid::Maze,
         initial_path: &Vec<grid::GridPoint<'a>>,
-        base_cost: u32,
     ) -> mdarray::DGrid<usize, 2> {
         let mut cost_lookup = mdarray::DGrid::<usize, 2>::new();
         cost_lookup.resize([g.grid.dim_x, g.grid.dim_y], 0);
