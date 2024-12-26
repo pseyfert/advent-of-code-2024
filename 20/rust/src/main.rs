@@ -22,21 +22,22 @@ enum CheatStatus {
     Cheated,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use boiler_plate::Day;
-    use test::Bencher;
-
-    #[bench]
-    fn bench_wrap1(b: &mut Bencher) {
-        Day20::bench_part1(b, "../input.txt");
-    }
-    #[bench]
-    fn bench_wrap2(b: &mut Bencher) {
-        Day20::bench_part2(b, "../input.txt");
-    }
-}
+boiler_plate::bench_parts!(Day20, "../input.txt");
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use boiler_plate::Day;
+//     use test::Bencher;
+//
+//     #[bench]
+//     fn bench_wrap1(b: &mut Bencher) {
+//         Day20::bench_part1(b, "../input.txt");
+//     }
+//     #[bench]
+//     fn bench_wrap2(b: &mut Bencher) {
+//         Day20::bench_part2(b, "../input.txt");
+//     }
+// }
 
 impl boiler_plate::Day for Day20 {
     fn part2(&self) -> anyhow::Result<u64> {

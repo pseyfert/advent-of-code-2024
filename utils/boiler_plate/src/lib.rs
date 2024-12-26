@@ -1,4 +1,3 @@
-#![feature(associated_type_defaults)]
 #![feature(test)]
 
 extern crate test;
@@ -58,4 +57,25 @@ pub trait Day: Sized {
         let input = Self::deser(p).unwrap().into();
         b.iter(|| black_box(Self::part1(&input)))
     }
+}
+
+#[macro_export]
+macro_rules! bench_parts {
+    ($DayType:ty, $input:expr) => {
+        #[cfg(test)]
+        mod tests {
+            use super::*;
+            use boiler_plate::Day;
+            use test::Bencher;
+
+            #[bench]
+            fn bench_wrap1(b: &mut Bencher) {
+                <$DayType>::bench_part1(b, $input);
+            }
+            #[bench]
+            fn bench_wrap2(b: &mut Bencher) {
+                <$DayType>::bench_part2(b, $input);
+            }
+        }
+    };
 }
