@@ -1,6 +1,11 @@
 #![feature(associated_type_defaults)]
+#![feature(test)]
+
+extern crate test;
 use log::{debug, error};
 use std::path::Path;
+
+use test::{black_box, Bencher};
 
 pub fn main_wrap<T: Day>() -> std::process::ExitCode {
     match main_fn::<T>() {
@@ -38,8 +43,27 @@ pub trait Day {
     }
     fn parse(desered: Self::Desered) -> anyhow::Result<Self::Parsed> {
         debug!("deserialized, now convert");
-        
+
         Ok(desered.into())
     }
-    fn process(_: &Self::Parsed) -> anyhow::Result<()>;
+    fn process(p: &Self::Parsed) -> anyhow::Result<()> {
+        let part1 = Self::part1(&p)?;
+        println!("Answer to part 1 {part1}.");
+        let part2 = Self::part2(&p)?;
+        println!("Answer to part 2 {part2}.");
+        Ok(())
+    }
+    fn part1(_: &Self::Parsed) -> anyhow::Result<u64>;
+    fn part2(_: &Self::Parsed) -> anyhow::Result<u64> {
+        Ok(0)
+    }
+
+    fn bench_part2(b: &mut Bencher, p: impl AsRef<Path>) {
+        let input = Self::deser(p).unwrap().into();
+        b.iter(|| black_box(Self::part2(&input)))
+    }
+    fn bench_part1(b: &mut Bencher, p: impl AsRef<Path>) {
+        let input = Self::deser(p).unwrap().into();
+        b.iter(|| black_box(Self::part1(&input)))
+    }
 }

@@ -3,6 +3,7 @@
 extern crate test;
 
 use log::{debug, trace};
+use rayon::prelude::*;
 
 struct Day20 {}
 
@@ -16,106 +17,60 @@ enum CheatStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::{black_box, Bencher};
+    use boiler_plate::Day;
+    use test::Bencher;
 
     #[bench]
-    fn bench_wrap(b: &mut Bencher) {
-        use boiler_plate::Day;
-        let input = Day20::parse(Day20::deser("../input.txt").unwrap()).unwrap();
-
-        b.iter(|| black_box(Day20::part1(&input)))
+    fn bench_wrap1(b: &mut Bencher) {
+        Day20::bench_part1(b, "../input.txt");
+    }
+    #[bench]
+    fn bench_wrap2(b: &mut Bencher) {
+        Day20::bench_part2(b, "../input.txt");
     }
 }
 
 impl boiler_plate::Day for Day20 {
-    fn parse(desered: Self::Desered) -> anyhow::Result<Self::Parsed> {
-        trace!("{desered:?}");
-        Ok(desered.into())
-    }
-
-    type Desered = Vec<String>;
-    type Parsed = grid::Maze;
-
-    fn process(g: &grid::Maze) -> anyhow::Result<()> {
-        let part1 = Self::part1(&g)?;
-        println!("there should be about {part1} shortcuts");
-        let part2 = Self::part2(&g)?;
-        println!("there should be about {part2} longer shortcuts");
-        Ok(())
-    }
-}
-
-impl Day20 {
-    fn initial<'a>(g: &'a grid::Maze) -> anyhow::Result<(Vec<grid::GridPoint<'a>>, u32)> {
-        let start = g
-            .start()
-            .ok_or(anyhow::anyhow!("didn't find start in maze"))?;
-        let end = g.end().ok_or(anyhow::anyhow!("didn't find end in maze"))?;
-        debug!("calling astar");
-        let Some((initial_path, base_cost)) = pathfinding::directed::astar::astar(
-            &start,
-            |p| {
-                g.unblocked_orth_neighbours(p)
-                    .into_iter()
-                    .inspect(|p| {
-                        trace!("suggesting {p:?} to go next");
-                    })
-                    .map(|p| (p, 1u32))
-            },
-            |p| grid::manhattan(p, &end) as u32,
-            |p| g.at(p) == grid::MazePoint::End,
-        )
-        .ok_or(anyhow::anyhow!("couldn't find the path"))
-        .into_iter()
-        .next() else {
-            return Err(anyhow::anyhow!("somehow could but couldn't find the path"));
-        };
-        Ok((initial_path, base_cost))
-    }
-
-    fn cost_lookup<'a>(
-        g: &'a grid::Maze,
-        initial_path: &Vec<grid::GridPoint<'a>>,
-        base_cost: u32,
-    ) -> mdarray::DGrid<usize, 2> {
-        let mut cost_lookup = mdarray::DGrid::<usize, 2>::new();
-        cost_lookup.resize([g.grid.dim_x, g.grid.dim_y], 0);
-
-        for (dist_from_start, point) in initial_path.iter().enumerate() {
-            cost_lookup[[point.x, point.y]] = dist_from_start;
-        }
-
-        cost_lookup
-    }
-    fn part2(g: &grid::Maze) -> anyhow::Result<usize> {
+    fn part2(g: &grid::Maze) -> anyhow::Result<u64> {
         let (initial_path, base_cost) = Self::initial(&g)?;
 
-        Ok(initial_path
-            .iter()
+        let potential_starts = &initial_path[0..(base_cost - 100) as usize];
+        Ok(potential_starts
+            .par_iter()
             .enumerate()
-            .take_while(|(i, _)| (*i as u32) < base_cost - 100)
+            // take_while does not work with par_iter, thus switching to potential_starts
+            // .take_while(|(i, _)| (*i as u32) < base_cost - 100)
+            // .filter(|(i, _)| (*i as u32) < base_cost - 100)
             .map(|(i, p1)| {
-                initial_path
-                    .iter()
-                    .enumerate()
-                    .skip(i + 101)
-                    .filter(|(j, p2)| {
-                        let cheat_length = grid::manhattan(p1, p2);
-                        if cheat_length > 20 {
-                            return false;
+                let mut counter = 0;
+                let mut iter = initial_path.iter().enumerate().skip(i + 101);
+                while let Some((j, p2)) = iter.next() {
+                    let cheat_length = grid::manhattan(p1, p2);
+                    if cheat_length > 20 {
+                        // tweak
+                        // For cheat length N = 20 + s we need to go at least s steps further in
+                        // the path
+                        for _ in 0..cheat_length - 21 {
+                            iter.next();
                         }
-                        if i < 1 && base_cost - 50 < *j as u32 {
-                            debug!("testing a cheat {i}: {p1:?} → {j}: {p2:?} of length {cheat_length}");
-                        }
-                        let (gain, allowed) = (j - i).overflowing_sub(cheat_length);
-                        !allowed && (gain >= 100)
-                    })
-                    .count()
+                        continue;
+                    }
+                    // if i < 1 && base_cost - 50 < j as u32 {
+                    //     debug!(
+                    //         "testing a cheat {i}: {p1:?} → {j}: {p2:?} of length {cheat_length}"
+                    //     );
+                    // }
+                    let (gain, allowed) = (j - i).overflowing_sub(cheat_length);
+                    if !allowed && (gain >= 100) {
+                        counter += 1;
+                    }
+                }
+                counter
             })
-            .sum::<usize>())
+            .sum::<u64>())
     }
 
-    fn part1(g: &grid::Maze) -> anyhow::Result<usize> {
+    fn part1(g: &grid::Maze) -> anyhow::Result<u64> {
         let (initial_path, base_cost) = Self::initial(&g)?;
 
         let cost_lookup = Self::cost_lookup(&g, &initial_path, base_cost);
@@ -137,9 +92,9 @@ impl Day20 {
                     .into_iter()
                     .filter_map(|o| o)
                     .filter(|p| cost_lookup[[p.x, p.y]] >= c + 102)
-                    .count()
+                    .count() as u64
             })
-            .sum::<usize>())
+            .sum::<u64>())
 
         // // TODO: why does astar_bag blow up?
         // let mut hmmm = std::collections::HashMap::new();
@@ -204,6 +159,53 @@ impl Day20 {
         // };
         //
         // debug!("{cheats:?}");
+    }
+
+    type Desered = Vec<String>;
+    type Parsed = grid::Maze;
+}
+
+impl Day20 {
+    fn initial<'a>(g: &'a grid::Maze) -> anyhow::Result<(Vec<grid::GridPoint<'a>>, u32)> {
+        let start = g
+            .start()
+            .ok_or(anyhow::anyhow!("didn't find start in maze"))?;
+        let end = g.end().ok_or(anyhow::anyhow!("didn't find end in maze"))?;
+        debug!("calling astar");
+        let Some((initial_path, base_cost)) = pathfinding::directed::astar::astar(
+            &start,
+            |p| {
+                g.unblocked_orth_neighbours(p)
+                    .into_iter()
+                    .inspect(|p| {
+                        trace!("suggesting {p:?} to go next");
+                    })
+                    .map(|p| (p, 1u32))
+            },
+            |p| grid::manhattan(p, &end) as u32,
+            |p| g.at(p) == grid::MazePoint::End,
+        )
+        .ok_or(anyhow::anyhow!("couldn't find the path"))
+        .into_iter()
+        .next() else {
+            return Err(anyhow::anyhow!("somehow could but couldn't find the path"));
+        };
+        Ok((initial_path, base_cost))
+    }
+
+    fn cost_lookup<'a>(
+        g: &'a grid::Maze,
+        initial_path: &Vec<grid::GridPoint<'a>>,
+        base_cost: u32,
+    ) -> mdarray::DGrid<usize, 2> {
+        let mut cost_lookup = mdarray::DGrid::<usize, 2>::new();
+        cost_lookup.resize([g.grid.dim_x, g.grid.dim_y], 0);
+
+        for (dist_from_start, point) in initial_path.iter().enumerate() {
+            cost_lookup[[point.x, point.y]] = dist_from_start;
+        }
+
+        cost_lookup
     }
 }
 
