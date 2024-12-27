@@ -18,7 +18,7 @@ impl<'de> Deserialize<'de> for Day05 {
 }
 
 #[cfg(test)]
-mod unit_tests{
+mod unit_tests {
     use super::*;
     use boiler_plate::Day;
     #[test]
@@ -52,18 +52,12 @@ impl<'de> Deserialize<'de> for Rule {
         let (Some(lhs), Some(rhs), None) = (part.next(), part.next(), part.next()) else {
             return Err(de::Error::custom(format!("invalid line: {}.", s)));
         };
+        // NB: late refactor, they swap.
         Ok(Rule {
-            lhs: lhs.parse().map_err(de::Error::custom)?,
-            rhs: rhs.parse().map_err(de::Error::custom)?,
-            order: Order::LeftThenRight,
+            rhs: lhs.parse().map_err(de::Error::custom)?,
+            lhs: rhs.parse().map_err(de::Error::custom)?,
         })
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum Order {
-    LeftThenRight,
-    RightThenLeft,
 }
 
 impl PartialOrd for Rule {
@@ -85,7 +79,6 @@ impl Ord for Rule {
 struct Rule {
     pub lhs: u16,
     pub rhs: u16,
-    pub order: Order,
 }
 
 #[derive(Debug, Clone)]
@@ -117,16 +110,6 @@ impl boiler_plate::Day for Day05 {
         let mut rules: Vec<Rule> = serde_linewise::from_str(&rules)?;
         let updates: Vec<Update> = serde_linewise::from_str(updates)?;
 
-        let mut mirror_rules = rules
-            .iter()
-            .map(|r| Rule {
-                lhs: r.rhs,
-                rhs: r.lhs,
-                order: Order::RightThenLeft,
-            })
-            .collect::<Vec<_>>();
-
-        rules.append(&mut mirror_rules);
         rules.par_sort();
         Ok(Self { rules, updates })
     }
@@ -159,17 +142,14 @@ impl boiler_plate::Day for Day05 {
 
 fn rule_compare(p1: &u16, p2: &u16, rules: &[Rule]) -> std::cmp::Ordering {
     let first_equal_or_too_far_idx = rules.partition_point(|rule| rule.lhs < *p1);
-    let Some(rule) = rules[first_equal_or_too_far_idx..]
+    let Some(_) = rules[first_equal_or_too_far_idx..]
         .iter()
         .take_while(|rule| rule.lhs == *p1)
         .find(|rule| rule.rhs == *p2)
     else {
-        panic!("no idea how to sort this")
+        return std::cmp::Ordering::Less;
     };
-    match rule.order {
-        Order::LeftThenRight => std::cmp::Ordering::Less,
-        Order::RightThenLeft => std::cmp::Ordering::Greater,
-    }
+    std::cmp::Ordering::Greater
 }
 
 fn check_validity(u: &Update, r: &[Rule]) -> bool {
@@ -183,14 +163,8 @@ fn check_validity(u: &Update, r: &[Rule]) -> bool {
             // .inspect(|rule| debug!("there is rule {rule:?}"))
             .take_while(|rule| rule.lhs == **lhs)
             .filter(|rule| rule.rhs == **rhs)
-            .all(|rule| {
-                debug!("considering rule {rule:?}");
-                match rule.order {
-                    Order::LeftThenRight => true,
-                    // Note to self: why do i even keep the other part of the list
-                    Order::RightThenLeft => false,
-                }
-            })
+            .next()
+            .is_none()
     })
 }
 
