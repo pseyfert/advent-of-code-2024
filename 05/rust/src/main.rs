@@ -1,9 +1,12 @@
+#![feature(test)]
+extern crate test;
 use itertools::Itertools;
+use log::debug;
 use rayon::prelude::*;
 use serde::{de, Deserialize};
 use std::path::Path;
-use log::debug;
 
+boiler_plate::bench_parts!(Day05, "../input.txt");
 boiler_plate::main!(Day05);
 impl<'de> Deserialize<'de> for Day05 {
     fn deserialize<D>(_deserializer: D) -> Result<Day05, D::Error>
@@ -11,6 +14,17 @@ impl<'de> Deserialize<'de> for Day05 {
         D: de::Deserializer<'de>,
     {
         todo!("should not be used");
+    }
+}
+
+#[cfg(test)]
+mod unit_tests{
+    use super::*;
+    use boiler_plate::Day;
+    #[test]
+    fn p1() {
+        let input = Day05::deser("../example.txt").unwrap().try_into().unwrap();
+        assert_eq!(Day05::part1(&input).unwrap(), 143);
     }
 }
 
@@ -98,7 +112,7 @@ impl boiler_plate::Day for Day05 {
             anyhow::bail!("Could not find the empty line");
         };
 
-        let mut rules = rules.to_string() + "\n";
+        let rules = rules.to_string() + "\n";
         debug!("updates is {updates:?}");
         let mut rules: Vec<Rule> = serde_linewise::from_str(&rules)?;
         let updates: Vec<Update> = serde_linewise::from_str(updates)?;
@@ -130,6 +144,32 @@ impl boiler_plate::Day for Day05 {
             })
             .sum())
     }
+    fn part2(&self) -> anyhow::Result<u64> {
+        let incorrect_ones = self.prepare_part2();
+        Ok(incorrect_ones
+            .into_par_iter()
+            .map(|mut u| {
+                u.pages
+                    .sort_unstable_by(|page1, page2| rule_compare(page1, page2, &self.rules));
+                u.pages[u.pages.len() / 2] as u64
+            })
+            .sum())
+    }
+}
+
+fn rule_compare(p1: &u16, p2: &u16, rules: &[Rule]) -> std::cmp::Ordering {
+    let first_equal_or_too_far_idx = rules.partition_point(|rule| rule.lhs < *p1);
+    let Some(rule) = rules[first_equal_or_too_far_idx..]
+        .iter()
+        .take_while(|rule| rule.lhs == *p1)
+        .find(|rule| rule.rhs == *p2)
+    else {
+        panic!("no idea how to sort this")
+    };
+    match rule.order {
+        Order::LeftThenRight => std::cmp::Ordering::Less,
+        Order::RightThenLeft => std::cmp::Ordering::Greater,
+    }
 }
 
 fn check_validity(u: &Update, r: &[Rule]) -> bool {
@@ -140,7 +180,7 @@ fn check_validity(u: &Update, r: &[Rule]) -> bool {
         let first_equal_or_too_far_idx = r.partition_point(|rule| rule.lhs < **lhs);
         r[first_equal_or_too_far_idx..]
             .iter()
-            .inspect(|rule| debug!("there is rule {rule:?}"))
+            // .inspect(|rule| debug!("there is rule {rule:?}"))
             .take_while(|rule| rule.lhs == **lhs)
             .filter(|rule| rule.rhs == **rhs)
             .all(|rule| {
@@ -152,4 +192,19 @@ fn check_validity(u: &Update, r: &[Rule]) -> bool {
                 }
             })
     })
+}
+
+impl Day05 {
+    fn prepare_part2(&self) -> Vec<Update> {
+        self.updates
+            .par_iter()
+            .filter_map(|u| {
+                if !check_validity(u, &self.rules) {
+                    Some(u.clone())
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
 }
