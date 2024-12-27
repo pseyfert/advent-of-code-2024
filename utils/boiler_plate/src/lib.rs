@@ -6,7 +6,10 @@ use std::path::Path;
 
 use test::{black_box, Bencher};
 
-pub fn main_wrap<T: Day>() -> std::process::ExitCode {
+pub fn main_wrap<T: Day>() -> std::process::ExitCode
+where
+    <<T as Day>::Desered as TryInto<T>>::Error: 'static,
+{
     match main_fn::<T>() {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(e) => {
@@ -18,11 +21,14 @@ pub fn main_wrap<T: Day>() -> std::process::ExitCode {
     }
 }
 
-fn main_fn<T: Day>() -> anyhow::Result<()> {
+fn main_fn<T: Day>() -> anyhow::Result<()>
+where
+    <<T as Day>::Desered as TryInto<T>>::Error: 'static,
+{
     let input = aoc_cli::setup_and_input()?;
     debug!("input path is clear, let's parse");
 
-    let parsed: T = T::deser(input)?.into();
+    let parsed: T = T::deser(input)?.try_into()?;
     debug!("parsed, let's process");
 
     T::process(&parsed)?;
@@ -31,8 +37,11 @@ fn main_fn<T: Day>() -> anyhow::Result<()> {
 }
 
 // TODO: rewrite such that TryFrom is sufficient.
-pub trait Day: Sized {
-    type Desered: for<'a> serde::de::Deserialize<'a> + Into<Self>;
+pub trait Day: Sized
+where
+    <Self::Desered as TryInto<Self>>::Error: Send + Sync + std::error::Error,
+{
+    type Desered: for<'a> serde::de::Deserialize<'a> + TryInto<Self>;
 
     fn deser(p: impl AsRef<Path>) -> anyhow::Result<Self::Desered> {
         Ok(serde_linewise::from_str(&std::fs::read_to_string(p)?)?)
@@ -50,11 +59,11 @@ pub trait Day: Sized {
     }
 
     fn bench_part2(b: &mut Bencher, p: impl AsRef<Path>) {
-        let input = Self::deser(p).unwrap().into();
+        let input = Self::deser(p).unwrap().try_into().unwrap();
         b.iter(|| black_box(Self::part2(&input)))
     }
     fn bench_part1(b: &mut Bencher, p: impl AsRef<Path>) {
-        let input = Self::deser(p).unwrap().into();
+        let input = Self::deser(p).unwrap().try_into().unwrap();
         b.iter(|| black_box(Self::part1(&input)))
     }
 }
