@@ -1,4 +1,5 @@
 #![feature(test)]
+#![feature(associated_type_defaults)]
 
 extern crate test;
 use log::{debug, error};
@@ -42,20 +43,30 @@ where
     <Self::Desered as TryInto<Self>>::Error: Send + Sync + std::error::Error,
 {
     type Desered: for<'a> serde::de::Deserialize<'a> + TryInto<Self>;
+    type State<'c> = ();
 
     fn deser(p: impl AsRef<Path>) -> anyhow::Result<Self::Desered> {
         Ok(serde_linewise::from_str(&std::fs::read_to_string(p)?)?)
     }
     fn process(p: &Self) -> anyhow::Result<()> {
-        let part1 = Self::part1(p)?;
+        let (part1, state) = Self::inner_part1(p)?;
         println!("Answer to part 1 {part1}.");
-        let part2 = Self::part2(p)?;
+        let part2 = Self::inner_part2(p, state)?;
         println!("Answer to part 2 {part2}.");
         Ok(())
     }
-    fn part1(&self) -> anyhow::Result<u64>;
-    fn part2(&self) -> anyhow::Result<u64> {
+    fn inner_part1<'b>(&'b self) -> anyhow::Result<(u64, Self::State<'b>)>;
+    fn inner_part2<'b>(&self, _s: Self::State<'b>) -> anyhow::Result<u64> {
         Ok(0)
+    }
+    fn part1(&self) -> anyhow::Result<u64> {
+        let (r, _) = self.inner_part1()?;
+        Ok(r)
+    }
+    fn part2(&self) -> anyhow::Result<u64> {
+        // let's hope the optimizer can deal with this
+        let (_, state) = self.inner_part1()?;
+        self.inner_part2(state)
     }
 
     fn bench_part2(b: &mut Bencher, p: impl AsRef<Path>) {

@@ -170,12 +170,31 @@ pub struct GridPoint<'a> {
     pub y: usize,
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, enum_iterator::Sequence)]
+#[derive(Eq, PartialEq, Debug, Clone, enum_iterator::Sequence, Hash)]
 pub enum Direction {
     North,
     South,
     East,
     West,
+}
+
+impl Direction {
+    pub fn ccw(&self) -> Self {
+        match self {
+            Self::North => Self::West,
+            Self::South => Self::East,
+            Self::East => Self::North,
+            Self::West => Self::South,
+        }
+    }
+    pub fn cw(&self) -> Self {
+        match self {
+            Self::North => Self::East,
+            Self::South => Self::West,
+            Self::East => Self::South,
+            Self::West => Self::North,
+        }
+    }
 }
 
 pub fn manhattan(lhs: &GridPoint, rhs: &GridPoint) -> usize {

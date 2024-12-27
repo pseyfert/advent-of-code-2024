@@ -1,15 +1,26 @@
 boiler_plate::main!(Day16);
+use itertools::Itertools;
 
-boiler_plate::just_wrap!(Day16, grid::Maze);
+struct Day16 {
+    data: grid::Maze,
+}
+
+impl From<Vec<String>> for Day16 {
+    fn from(vs: Vec<String>) -> Day16 {
+        Day16 { data: vs.into() }
+    }
+}
 
 impl boiler_plate::Day for Day16 {
     type Desered = Vec<String>;
+    type State<'b> =
+        pathfinding::directed::astar::AstarSolution<(grid::GridPoint<'b>, grid::Direction)>;
 
-    fn part1(&self) -> anyhow::Result<u64> {
+    fn inner_part1<'b>(&'b self) -> anyhow::Result<(u64, Self::State<'b>)> {
         let start = self.data.start().ok_or(anyhow::anyhow!("no start?"))?;
         let end = self.data.end().ok_or(anyhow::anyhow!("no end?"))?;
 
-        let Some((_best_path, cost)) = pathfinding::directed::astar::astar_bag(
+        let Some((solutions, cost)) = pathfinding::directed::astar::astar_bag(
             &(start, grid::Direction::East),
             |(pos, dir)| {
                 [
@@ -40,7 +51,17 @@ impl boiler_plate::Day for Day16 {
         ) else {
             anyhow::bail!("didn't manage to solve maze");
         };
-        Ok(cost as u64)
+        Ok((cost as u64, solutions))
+    }
+
+    fn inner_part2<'b>(&self, sol: Self::State<'b>) -> anyhow::Result<u64> {
+        let p: Vec<grid::GridPoint<'_>> = sol
+            .into_iter()
+            .map(|path| path.into_iter().map(|(p, _dir)| p))
+            .flatten()
+            .unique()
+            .collect();
+        Ok(p.len() as u64)
     }
 }
 
