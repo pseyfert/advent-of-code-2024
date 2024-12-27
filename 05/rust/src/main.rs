@@ -2,6 +2,7 @@
 extern crate test;
 use itertools::Itertools;
 use log::debug;
+use partial_sort::PartialSort;
 use rayon::prelude::*;
 use serde::{de, Deserialize};
 use std::path::Path;
@@ -132,9 +133,11 @@ impl boiler_plate::Day for Day05 {
         Ok(incorrect_ones
             .into_par_iter()
             .map(|mut u| {
-                u.pages
-                    .sort_unstable_by(|page1, page2| rule_compare(page1, page2, &self.rules));
-                u.pages[u.pages.len() / 2] as u64
+                let mid = u.pages.len() / 2;
+                u.pages.partial_sort(1 + mid, |page1, page2| {
+                    rule_compare(page1, page2, &self.rules)
+                });
+                u.pages[mid] as u64
             })
             .sum())
     }

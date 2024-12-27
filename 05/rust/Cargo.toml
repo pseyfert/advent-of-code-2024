@@ -8,6 +8,7 @@ anyhow = "1.0.95"
 boiler_plate = { version = "0.1.0", path = "../../utils/boiler_plate" }
 itertools = "0.13.0"
 log = "0.4.22"
+partial_sort = "1.0.0"
 rayon = "1.10.0"
 serde = "1.0.216"
 serde_linewise = { version = "0.1.0", path = "../../utils/serde_linewise" }

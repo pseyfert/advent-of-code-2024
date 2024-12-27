@@ -327,6 +327,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
 
 [[package]]
+name = "partial_sort"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "911e0f25a1142e16a3ad3e16b15508823fe46a4f503c59bb4bcf61d5c467a06a"
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -372,6 +378,7 @@ dependencies = [
  "boiler_plate",
  "itertools",
  "log",
+ "partial_sort",
  "rayon",
  "serde",
  "serde_linewise",
